@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Video Player</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+    header {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 24px;
+    }
+    .video-container {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background-color: black;
+      overflow: hidden;
+    }
+    .video-container video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #playPauseBtn, #muteUnmuteBtn, .timer-info, .timer-slider, #speedControl, .skip-buttons img, #downloadBtn, #shareBtn, #forwardImage, #backwardImage {
+      position: absolute;
+      z-index: 10;
+      cursor: pointer;
+    }
+    #playPauseBtn {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+    }
+    #muteUnmuteBtn {
+      top: 10px;
+      left: 10px;
+      width: 50px;
+      height: 50px;
+    }
+    #downloadBtn {
+      top: 10px;
+      right: 60px;
+      width: 50px;
+      height: 50px;
+    }
+    #shareBtn {
+      top: 10px;
+      right: 10px;
+      width: 50px;
+      height: 50px;
+    }
+    #speedControl {
+      bottom: 50px;
+      right: 10px;
+      padding: 5px;
+      font-size: 14px;
+      background-color: rgba(520, 0, 0, 0.5);
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .skip-buttons img {
+      width: 50px;
+      height: 50px;
+    }
+    .skip-buttons.left {
+      top: 50%;
+      left: 5%;
+      transform: translateY(-50%);
+    }
+    .skip-buttons.right {
+      top: 50%;
+      right: 5%;
+      transform: translateY(-50%);
+    }
+    .timer-slider {
+      bottom: 30px;
+      left: 10px;
+      width: calc(100% - 20px);
+    }
+    .timer-slider input {
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;
+      background: #f00;
+      appearance: none;
+    }
+    .timer-slider input::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 13px;
+      background: #65f;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .timer-info {
+      bottom: 10px;
+      left: 10px;
+      color: red;
+    }
+    #forwardImage, #backwardImage {
+      display: none;
+      width: 70px;
+      height: 30px;
+    }
+    #forwardImage {
+      top: 50%;
+      right: 10%;
+      transform: translateY(-50%);
+    }
+    #backwardImage {
+      top: 50%;
+      left: 10%;
+      transform: translateY(-50%);
+    }
+        /* Fixed Video Container */
+    .video-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      max-width: 640px;
+      z-index: 10;
+      background-color: black;
+    }
+
+    .video-container video {
+      width: 100%;
+      height: auto;
+    }
+    
+    .video-title {
+      position: fixed; /* वीडियो के साथ फिक्स्ड */
+      top: 36.3%; /* वीडियो के नीचे */
+      left: px; /* बाईं ओर */
+      transform: translateY(-100%); /* नीचे के लिए शिफ्ट */
+      color: white;
+      font-size: 16px;
+      background-color: rgba(0, 0, 0, 0.7); /* बैकग्राउंड हल्का काला */
+      padding: 5px 10px;
+      z-index: 20; /* वीडियो से ऊपर */
+      max-width: 600px;
+      word-wrap: break-word;
+    }
+        .image-grid {
+      margin-top: 200px; /* Space below the fixed video */
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px;
+    }
+
+    .image-container {
+      position: relative;
+      width: 100%; /* Full width */
+      max-width: 700px; /* Max width */
+      aspect-ratio: 16 / 9; /* 16:9 Aspect Ratio */
+      overflow: hidden;
+      cursor: pointer;
+      background-color: #001;
+    }
+
+    .image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Resize without cropping */
+    }
+
+    .image-info {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      font-size: 12px;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+
+    .image-title {
+      text-align: center;
+      font-size: 18px;
+      color: #333;
+      font-family:Comic Sans MS  ;
+      
+      font-weight: bold;
+      color: #004;
+    
+    
+    
+  </style>
+</head>
+<body>
+
+<header>
+  Custom Video Player
+</header>
+
+<div class="video-container" id="videoContainer">
+  <video id="videoPlayer">
+    <source src="2.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Play/Pause Button -->
+  <img id="playPauseBtn" src="play.png" alt="Play">
+
+  <!-- Mute/Unmute Button -->
+  <img id="muteUnmuteBtn" src="unmute.png" alt="Mute">
+
+  <!-- Download Button -->
+  <img id="downloadBtn" src="download.png" alt="Download" onclick="downloadVideo()">
+
+  <!-- Share Button -->
+  <img id="shareBtn" src="share.png" alt="Share" onclick="shareVideo()">
+
+  <!-- Speed Control -->
+  <select id="speedControl">
+          <option value="0.25">0.25x</option>
+    <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+    <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+    <option value="1.5">1.5x</option>
+        <option value="1.75">1.75x</option>
+    <option value="2">2x</option>
+        <option value="2.5">2.5x</option>
+            <option value="3">3x</option>
+          <option value="3.5">3.5x</option>
+          <option value="4">4x</option>
+
+
+
+  </select>
+
+  <!-- Forward/Backward Images -->
+  <img id="forwardImage" src="forward.png" alt="Forward">
+  <img id="backwardImage" src="backward.png" alt="Backward">
+
+  <!-- Skip Buttons -->
+  <div class="skip-buttons left">
+    <img id="backwardBtn" src="backward.png" alt="Backward">
+  </div>
+  <div class="skip-buttons right">
+    <img id="forwardBtn" src="forward.png" alt="Forward">
+  </div>
+
+  <!-- Timer Slider -->
+  <div class="timer-slider">
+    <input id="timeSlider" type="range" min="0" max="100" value="0">
+  </div>
+
+  <!-- Timer Info -->
+  <div class="timer-info" id="timerInfo">00:00/00:00</div>
+</div>
+
+<!-- Video Title -->
+<div class="video-title">Happy New Year 2025 _ Happy New Year 2025 _ Happy New Year status 2025  </div>
+
+  <!-- Image 0 -->
+  <div class="image-container" onclick="window.location.href='3.html'">
+    <img src="black.jpg" alt="Image 3">
+    <div class="image-info"></div>
+  </div>
+  <div class="image-title"></div>
+
+
+
+
+  
+
+  <!-- Image 5 -->
+  <div class="image-container" onclick="window.location.href='5.html'">
+    <img src="5.jpg" alt="Image 5">
+    <div class="image-info">00:31</div>
+  </div>
+  <div class="image-title">2025 आ रहा है 🤣 New year funny status 😂 Naye Saal Ke status 😆 Happy New year </div>
+
+  <!-- Image 6 -->
+  <div class="image-container" onclick="window.location.href='6.html'">
+    <img src="6.jpg" alt="Image 6">
+    <div class="image-info">00:19</div>
+  </div>
+  <div class="image-title"> happy new year 2025 status_new year status_new year 2025</div>
+
+
+
+
+
+  <!-- Image 3 -->
+  <div class="image-container" onclick="window.location.href='3.html'">
+    <img src="3.jpg" alt="Image 3">
+    <div class="image-info">00:31</div>
+  </div>
+  <div class="image-title">Happy New Year 2025 😊💝status WhatsApp status</div>
+
+<!-- Image 18 -->
+<div class="image-container" onclick="window.location.href='18.html'">
+  <img src="18.jpg" alt="Image 18">
+  <div class="image-info">00:26</div>
+</div>
+<div class="image-title"> जंगबाज राजपूत song status||New Rajput status||New Rajputana status||New Rajput song
+
+</div>
+<!-- Image 8 -->
+<div class="image-container" onclick="window.location.href='8.html'">
+  <img src="8.jpg" alt="Image 8">
+  <div class="image-info">00:15</div>
+</div>
+<div class="image-title">Mahadev status🚩 || Mahakal status 🚩 || Bholenath status 🔱 || Mahadev 4k status💫 #mahadev</div>
+
+<!-- Image 9 -->
+<div class="image-container" onclick="window.location.href='9.html'">
+  <img src="9.jpg" alt="Image 9">
+  <div class="image-info">00:31</div>
+</div>
+<div class="image-title">New Rajputana whatsapp status || Rajput dialog || Rajput song | Rajputana Status 2019
+  <!-- Image 7 -->
+  <div class="image-container" onclick="window.location.href='7.html'">
+    <img src="7.jpg" alt="Image 7">
+    <div class="image-info">00:24</div>
+  </div>
+  <div class="image-title">ठाकुर👿खतरनाक👿शायरी 👆स्टेटस || ठाकुर के लिए🔥|| Thakur attitude💥Status || Watsapp💥</div>
+
+</div>
+
+<!-- Image 13 -->
+<div class="image-container" onclick="window.location.href='13.html'">
+  <img src="13.jpg" alt="Image 13">
+  <div class="image-info">00:19</div>
+</div>
+<div class="image-title"> Bhabhi ke Sang Holi Mein WhatsApp status
+
+</div>
+
+<!-- Image 14 -->
+<div class="image-container" onclick="window.location.href='14.html'">
+  <img src="14.jpg" alt="Image 14">
+  <div class="image-info">00:19</div>
+</div>
+<div class="image-title">Holi status | holi status video| holi status 2022 | coming soon holi status| holi 4k status bhojpuri
+
+ </div>
+
+<!-- Image 15 -->
+<div class="image-container" onclick="window.location.href='15.html'">
+  <img src="15.jpg" alt="Image 15">
+  <div class="image-info">00:19</div>
+</div>
+<div class="image-title">Happy Holi WhatsApp status। Holi status 2023। Radha Krishna Holi status
+
+ </div>
+
+<!-- Image 16 -->
+<div class="image-container" onclick="window.location.href='16.html'">
+  <img src="16.jpg" alt="Image 16">
+  <div class="image-info">00:19</div>
+</div>
+<div class="image-title">Holi Status 😍 EFX Status ⚡ Happy Holi Status WhatsApp Status HDR Ultra Status wicked Mangru
+
+
+ </div>
+
+
+
+<!-- Image 19 -->
+<div class="image-container" onclick="window.location.href='19.html'">
+  <img src="19.jpg" alt="Image 19">
+  <div class="image-info">00:30</div>
+</div>
+<div class="image-title">Diwali Whatsapp Status | Diwali Whatsapp Status 2021 | Happy Diwali Whatsapp Status | Diwali Status
+
+ </div>
+
+<!-- Image 20 -->
+<div class="image-container" onclick="window.location.href='20.html'">
+  <img src="20.jpg" alt="Image 20">
+  <div class="image-info">00:30</div>
+</div>
+<div class="image-title"> 𝗛𝗮𝗽𝗽𝘆 𝗗𝗶𝘄𝗮𝗹𝗶 𝗦𝘁𝗮𝘁𝘂𝘀 𝟮𝟬𝟮𝟰🪔🥰 || diwali status || 𝗵𝗮𝗽𝗽𝘆 𝗱𝗶𝘄𝗮𝗹𝗶 video 𝘄𝗮𝘁𝘀𝗮𝗽𝗽 𝘀𝘁𝗮𝘁𝘂𝘀</div>
+
+<!-- Image 10 -->
+<div class="image-container" onclick="window.location.href='10.html'">
+  <img src="10.jpg" alt="Image 10">
+  <div class="image-info">00:30</div>
+</div>
+<div class="image-title"> 💪Rajputana👑 dialogue status 2020||thakur ringtone 2020||rajput ringtone 2020
+</div>
+
+<!-- Image 11 -->
+<div class="image-container" onclick="window.location.href='11.html'">
+  <img src="11.jpg" alt="Image 11">
+  <div class="image-info">00:30</div>
+</div>
+<div class="image-title"> Ham thakura ke chhore new thakur status new rajput statusRajputana status
+</div>
+
+<!-- Image 12 -->
+<div class="image-container" onclick="window.location.href='12.html'">
+  <img src="12.jpg" alt="Image 12">
+  <div class="image-info">00:28</div>
+</div>
+<div class="image-title"> Rajput kom hamari status||New Thakur status||New Rajputana status||New Rajput status
+</div>
+
+<!-- Image 17 -->
+<div class="image-container" onclick="window.location.href='17.html'">
+  <img src="17.jpg" alt="Image 17">
+  <div class="image-info">00:19</div>
+</div>
+<div class="image-title"> happy holi /🥰/ holi status 2022 /🌹/ coming soon /❤️/ black screen status 👀 ringtone 💞 dj remix song</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  const video = document.getElementById('videoPlayer');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const muteUnmuteBtn = document.getElementById('muteUnmuteBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const timeSlider = document.getElementById('timeSlider');
+  const timerInfo = document.getElementById('timerInfo');
+  const forwardBtn = document.getElementById('forwardBtn');
+  const backwardBtn = document.getElementById('backwardBtn');
+  const speedControl = document.getElementById('speedControl');
+  const forwardImage = document.getElementById('forwardImage');
+  const backwardImage = document.getElementById('backwardImage');
+  const videoContainer = document.getElementById('videoContainer');
+  let controlsVisible = true;
+
+  // Play/Pause Button
+  playPauseBtn.addEventListener('click', () => {
+    if (video.paused) {
+      video.play();
+      playPauseBtn.src = 'pause.png';
+    } else {
+      video.pause();
+      playPauseBtn.src = 'play.png';
+    }
+  });
+
+  // Mute/Unmute Button
+  muteUnmuteBtn.addEventListener('click', () => {
+    video.muted = !video.muted;
+    muteUnmuteBtn.src = video.muted ? 'mute.png' : 'unmute.png';
+  });
+
+  // Update Timer Info and Slider
+  video.addEventListener('timeupdate', () => {
+    const currentTime = video.currentTime;
+    const duration = video.duration;
+    timeSlider.value = (currentTime / duration) * 100;
+    timerInfo.textContent = formatTime(currentTime) + ' / ' + formatTime(duration);
+  });
+
+  // Format Time (MM:SS)
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+// Speed Control
+speedControl.addEventListener('change', () => {
+  video.playbackRate = parseFloat(speedControl.value); // Apply the selected speed
+});
+  // Slider Seek
+  timeSlider.addEventListener('input', () => {
+    const newTime = (timeSlider.value / 100) * video.duration;
+    video.currentTime = newTime;
+  });
+
+  // Forward/Backward Buttons
+  forwardBtn.addEventListener('click', () => {
+    video.currentTime += 10;
+    showTemporaryImage(forwardImage);
+  });
+
+  backwardBtn.addEventListener('click', () => {
+    video.currentTime -= 10;
+    showTemporaryImage(backwardImage);
+  });
+
+  // Double Tap Forward/Backward
+  videoContainer.addEventListener('dblclick', (event) => {
+    const rect = videoContainer.getBoundingClientRect();
+    if (event.clientX < rect.width / 2) {
+      video.currentTime -= 10;
+      showTemporaryImage(backwardImage);
+    } else {
+      video.currentTime += 10;
+      showTemporaryImage(forwardImage);
+    }
+  });
+
+  // Show Temporary Image
+  function showTemporaryImage(image) {
+    image.style.display = 'block';
+    setTimeout(() => {
+      image.style.display = 'none';
+    }, 200);
+  }
+
+  // Toggle Controls on Video Click
+  video.addEventListener('click', () => {
+    controlsVisible = !controlsVisible;
+    toggleControls();
+  });
+
+  // Ensure Controls Always Show After Video Start
+  video.addEventListener('play', () => {
+    controlsVisible = true;
+    toggleControls();
+  });
+
+  // Toggle Controls Visibility
+  function toggleControls() {
+    const controls = [playPauseBtn, muteUnmuteBtn, timeSlider, timerInfo, speedControl, forwardBtn, backwardBtn, downloadBtn, shareBtn];
+    controls.forEach((el) => {
+      el.style.display = controlsVisible ? 'block' : 'none';
+    });
+  }
+
+  // Download Video
+  function downloadVideo() {
+    const link = document.createElement('a');
+    link.href = '2.mp4'; // वीडियो फाइल का नाम और लोकेशन
+    link.download = '2.mp4'; // डाउनलोड के लिए फाइल का नाम सेट करें
+    link.click(); // डाउनलोड शुरू करें
+}
+
+  // Share Video
+  function shareVideo() {
+    const shareUrl = 'https://spickhajuha.github.io/ASMDPLAY/2.html';
+    if (navigator.share) {
+      navigator.share({
+        title: 'Video Share',
+        text: 'Check out this amazing video!',
+        url: shareUrl
+      }).catch((error) => console.log('Error sharing:', error));
+    } else {
+      alert('Share feature is not supported on your browser.');
+    }
+  }
+</script>
+
+</body>
+</html>
