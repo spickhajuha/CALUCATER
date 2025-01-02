@@ -53,6 +53,10 @@ video.addEventListener('loadedmetadata', () => {
   durationDisplay.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 });
 
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6945373900452639"
+     crossorigin="anonymous"></script>
+
+
 video.addEventListener('timeupdate', () => {
   timeSlider.value = video.currentTime;
   let currentTime = video.currentTime;
